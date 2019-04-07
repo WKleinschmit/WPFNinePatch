@@ -51,13 +51,13 @@
                       VerticalAlignment="Center" />
         <np:NinePatchCanvas Grid.Column="0"
                             Grid.Row="0"
-                            PngUri="Examples/heartsframe.9.png">
+                            PngUri="Examples/dots.9.png">
             <Grid Background="BlueViolet"
                   Opacity=".3" />
         </np:NinePatchCanvas>
         <np:NinePatchCanvas Grid.Column="2"
                             Grid.Row="0"
-                            PngUri="Examples/phone_notif.9.png">
+                            PngUri="Examples/dots_compiled.9.png">
             <Grid Background="BlueViolet"
                   Opacity="0.3">
             </Grid>

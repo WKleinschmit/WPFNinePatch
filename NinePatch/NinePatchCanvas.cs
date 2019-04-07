@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows;
@@ -84,76 +85,15 @@ namespace NinePatch
             bgGrid = Template.FindName("bgGrid", this) as Grid
                 ?? throw new InvalidOperationException();
 
-            if (ninePatchData != null)
-            {
-                ContentMargin = new Thickness(
-                    ninePatchData.PaddingLeft,
-                    ninePatchData.PaddingTop,
-                    ninePatchData.PaddingRight,
-                    ninePatchData.PaddingBottom);
-            }
+            foreach (ColumnDefinition columnDefinition in ColumnDefinitions)
+                bgGrid.ColumnDefinitions.Add(columnDefinition);
 
-            MakeColumsAndRows();
+            foreach (RowDefinition rowDefinition in RowDefinitions)
+                bgGrid.RowDefinitions.Add(rowDefinition);
         }
 
-        private void MakeColumsAndRows()
-        {
-            bool stretch = false;
-            uint last = 0;
-            foreach (uint xDiv in ninePatchData.XDivs)
-            {
-                if (xDiv != 0)
-                {
-                    bgGrid.ColumnDefinitions.Add(new ColumnDefinition
-                    {
-                        Width = new GridLength(xDiv - last, stretch ? GridUnitType.Star : GridUnitType.Pixel)
-                    });
-                    last = xDiv;
-                }
-
-                stretch = !stretch;
-            }
-            if (last < ninePatchData.Rc.Width)
-                bgGrid.ColumnDefinitions.Add(new ColumnDefinition
-                {
-                    Width = new GridLength(ninePatchData.Rc.Width - last, stretch ? GridUnitType.Star : GridUnitType.Pixel)
-                });
-
-            stretch = false;
-            last = 0;
-            foreach (uint yDiv in ninePatchData.YDivs)
-            {
-                if (yDiv != 0)
-                {
-                    bgGrid.RowDefinitions.Add(new RowDefinition
-                    {
-                        Height = new GridLength(yDiv - last, stretch ? GridUnitType.Star : GridUnitType.Pixel)
-                    });
-                    last = yDiv;
-                }
-
-                stretch = !stretch;
-            }
-            if (last < ninePatchData.Rc.Height)
-                bgGrid.RowDefinitions.Add(new RowDefinition
-                {
-                    Height = new GridLength(ninePatchData.Rc.Height - last, stretch ? GridUnitType.Star : GridUnitType.Pixel)
-                });
-
-            for (int r = 0; r < bgGrid.RowDefinitions.Count; r++)
-            {
-                for (int c = 0; c < bgGrid.ColumnDefinitions.Count; c++)
-                {
-                    Ellipse ell = new Ellipse
-                    {
-                        Fill = Brushes.Crimson,
-                    };
-                    ell.SetValue(Grid.ColumnProperty, c);
-                    ell.SetValue(Grid.RowProperty, r);
-                    bgGrid.Children.Add(ell);
-                }
-            }
-        }
+        private readonly List<ColumnDefinition> ColumnDefinitions = new List<ColumnDefinition>();
+        private readonly List<RowDefinition> RowDefinitions = new List<RowDefinition>();
 
         private void LoadFromStream(Stream stream)
         {
@@ -169,6 +109,8 @@ namespace NinePatch
                 if (reader.ReadUInt64() != 0x0a1a0a0d474e5089ul)
                     throw new InvalidDataException();
 
+                ninePatchData = new NinePatchData();
+
                 string ctype = null;
                 while (ctype != "IEND")
                 {
@@ -178,18 +120,12 @@ namespace NinePatch
                     switch (ctype)
                     {
                         case "npOl":
-                            if (ninePatchData == null)
-                                ninePatchData = new NinePatchData();
                             ninePatchData.Read_npOl(reader);
                             break;
                         case "npLb":
-                            if (ninePatchData == null)
-                                ninePatchData = new NinePatchData();
                             ninePatchData.Read_npLb(reader);
                             break;
                         case "npTc":
-                            if (ninePatchData == null)
-                                ninePatchData = new NinePatchData();
                             ninePatchData.Read_npTc(reader);
                             break;
                         default:
@@ -199,144 +135,62 @@ namespace NinePatch
 
                     reader.ReadBigEndianUInt32(); // crc
                 }
+
+                if (ninePatchData.HasPatches)
+                {
+                    ContentMargin = new Thickness(
+                        ninePatchData.PaddingLeft,
+                        ninePatchData.PaddingTop,
+                        ninePatchData.PaddingRight,
+                        ninePatchData.PaddingBottom);
+
+                    bool stretch = false;
+                    uint n = 0;
+                    ColumnDefinitions.Clear();
+                    foreach (uint xDiv in ninePatchData.XDivs)
+                    {
+                        if (xDiv == 0)
+                        {
+                            stretch = !stretch;
+                            continue;
+                        }
+
+                        ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(xDiv - n, stretch ? GridUnitType.Star : GridUnitType.Pixel) });
+                        n = xDiv;
+                        stretch = !stretch;
+
+                        if (xDiv == ninePatchData.XDivs.Last() && xDiv != rc.Width)
+                            ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(rc.Width - n, stretch ? GridUnitType.Star : GridUnitType.Pixel) });
+                    }
+
+                    stretch = false;
+                    n = 0;
+                    RowDefinitions.Clear();
+                    foreach (uint yDiv in ninePatchData.YDivs)
+                    {
+                        if (yDiv == 0)
+                        {
+                            stretch = !stretch;
+                            continue;
+                        }
+
+                        RowDefinitions.Add(new RowDefinition { Height = new GridLength(yDiv - n, stretch ? GridUnitType.Star : GridUnitType.Pixel) });
+                        n = yDiv;
+                        stretch = !stretch;
+
+                        if (yDiv == ninePatchData.YDivs.Last() && yDiv != rc.Height)
+                            RowDefinitions.Add(new RowDefinition { Height = new GridLength(rc.Height - n, stretch ? GridUnitType.Star : GridUnitType.Pixel) });
+                    }
+                }
             }
 
-            if (ninePatchData == null)
-            {
-                ninePatchData = new NinePatchData { Rc = rc };
+            if (!ninePatchData.HasPatches)
+                ReadFromImage(bmp);
+        }
 
-                BitmapData bmpData = bmp.LockBits(rc, ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+        private void ReadFromImage(Bitmap bmp)
+        {
 
-                List<uint> XDivs = new List<uint>();
-                List<uint> YDivs = new List<uint>();
-
-                // Top Edge
-                uint current = 0x00000000;
-                for (uint n = 1; n < rc.Width - 2; ++n)
-                {
-                    uint pixel = bmpData.GetPixel(n, 0);
-                    switch (pixel)
-                    {
-                        case 0x00000000u when current == 0xFF000000u:
-                            XDivs.Add(n - 1);
-                            current = 0x00000000u;
-                            break;
-                        case 0xFF000000u when current == 0x00000000u:
-                            XDivs.Add(n - 1);
-                            current = 0xFF000000u;
-                            break;
-                    }
-                }
-                if (current == 0xFF000000u)
-                    XDivs.Add((uint)rc.Width - 2u);
-                ninePatchData.NumXDivs = (byte)XDivs.Count;
-                ninePatchData.XDivs = XDivs.ToArray();
-
-                // Left Edge
-                current = 0x00000000;
-                for (uint n = 1; n < rc.Height - 2; ++n)
-                {
-                    uint pixel = bmpData.GetPixel(0, n);
-                    switch (pixel)
-                    {
-                        case 0x00000000u when current == 0xFF000000u:
-                            YDivs.Add(n - 1);
-                            current = 0x00000000u;
-                            break;
-                        case 0xFF000000u when current == 0x00000000u:
-                            YDivs.Add(n - 1);
-                            current = 0xFF000000u;
-                            break;
-                    }
-                }
-                if (current == 0xFF000000u)
-                    YDivs.Add((uint)rc.Height - 2u);
-                ninePatchData.NumYDivs = (byte)YDivs.Count;
-                ninePatchData.YDivs = YDivs.ToArray();
-
-                // Bottom Edge
-                uint x1 = 1;
-                while (bmpData.GetPixel(x1, (uint)rc.Height - 1) == 0xFFFF0000)
-                {
-                    ++ninePatchData.LayoutBoundsLeft;
-                    ++x1;
-                }
-
-                uint x2 = (uint)rc.Width - 2;
-                while (bmpData.GetPixel(x2, (uint)rc.Height - 1) == 0xFFFF0000)
-                {
-                    ++ninePatchData.LayoutBoundsRight;
-                    --x2;
-                }
-                current = 0x00000000;
-                for (uint n = 1; n < rc.Width - 2; ++n)
-                {
-                    uint pixel = bmpData.GetPixel(n, (uint)rc.Height - 1);
-                    switch (pixel)
-                    {
-                        case 0xFFFF0000u when current == 0x00000000u:
-                            break;
-                        case 0xFF000000u when current == 0x00000000u:
-                            ninePatchData.PaddingLeft = (int)n - 1;
-                            current = 0xFF000000u;
-                            break;
-                        case 0x00000000u when current == 0xFF000000u:
-                        case 0xFFFF0000u when current == 0xFF000000u:
-                            ninePatchData.PaddingRight = rc.Width - (int)n - 1;
-                            current = 0x00000000u;
-                            break;
-                    }
-                }
-
-                // Right Edge
-                uint y1 = 1;
-                while (bmpData.GetPixel((uint)rc.Width - 1, y1) == 0xFFFF0000)
-                {
-                    ++ninePatchData.LayoutBoundsTop;
-                    ++y1;
-                }
-
-                uint y2 = (uint)rc.Height - 2;
-                while (bmpData.GetPixel((uint)rc.Width - 1, y2) == 0xFFFF0000)
-                {
-                    ++ninePatchData.LayoutBoundsBottom;
-                    --y2;
-                }
-                current = 0x00000000;
-                for (uint n = 1; n < rc.Height - 2; ++n)
-                {
-                    uint pixel = bmpData.GetPixel((uint)rc.Width - 1, n);
-                    switch (pixel)
-                    {
-                        case 0xFFFF0000u when current == 0x00000000u:
-                            break;
-                        case 0xFF000000u when current == 0x00000000u:
-                            ninePatchData.PaddingTop = (int)n - 1;
-                            current = 0xFF000000u;
-                            break;
-                        case 0x00000000u when current == 0xFF000000u:
-                        case 0xFFFF0000u when current == 0xFF000000u:
-                            ninePatchData.PaddingBottom = rc.Height - (int)n - 1;
-                            current = 0x00000000u;
-                            break;
-                    }
-                }
-
-                bmp.UnlockBits(bmpData);
-
-                Rectangle rcDst = rc;
-                rcDst.Inflate(-2, -2);
-                Rectangle rcSrc = rcDst;
-                rcSrc.Offset(1, 1);
-
-                Bitmap bm = new Bitmap(bmp, rc.Width - 2, rc.Height - 2);
-                using (Graphics G = Graphics.FromImage(bm))
-                    G.DrawImage(bmp, rcDst, rcSrc, GraphicsUnit.Pixel);
-                bmp.Dispose();
-                bmp = bm;
-
-                ninePatchData.Rc = rcDst;
-            }
         }
 
         private void LoadFromFile(string filePath)

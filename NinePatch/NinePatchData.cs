@@ -12,6 +12,10 @@ namespace NinePatch
         public float Radius { get; set; }
         public uint Alpha { get; set; }
 
+        public bool HasOutline { get; private set; }
+        public bool HasLayoutBounds { get; private set; }
+        public bool HasPatches { get; private set; }
+
         public void Read_npOl(BinaryReader reader)
         {
             OutlineInsetsLeft = reader.ReadInt32();
@@ -20,6 +24,7 @@ namespace NinePatch
             OutlineInsetsBottom = reader.ReadInt32();
             Radius = reader.ReadSingle();
             Alpha = reader.ReadUInt32();
+            HasOutline = true;
         }
 
         public int LayoutBoundsLeft { get; set; }
@@ -33,6 +38,7 @@ namespace NinePatch
             LayoutBoundsTop = reader.ReadInt32();
             LayoutBoundsRight = reader.ReadInt32();
             LayoutBoundsBottom = reader.ReadInt32();
+            HasLayoutBounds = true;
         }
 
         public byte WasDeserialized { get; set; }
@@ -76,8 +82,8 @@ namespace NinePatch
             Colors = new uint[NumColors];
             for (int i = 0; i < NumColors; i++)
                 Colors[i] = reader.ReadBigEndianUInt32();
-        }
 
-        public Rectangle Rc { get; set; }
+            HasPatches = true;
+        }
     }
 }

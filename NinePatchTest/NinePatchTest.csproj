@@ -102,9 +102,13 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Examples\turqfocus.9.png" />
+    <Resource Include="Examples\turquoise.9.png" />
     <Resource Include="Examples\abc_popup_background_mtrl_mult.9.png" />
     <Resource Include="Examples\acc_title_bar_shadow.9.png" />
     <Resource Include="Examples\heartsframe.9.png" />
+    <Resource Include="Examples\dots.9.png" />
+    <Resource Include="Examples\dots_compiled.9.png" />
     <Content Include="Examples\logo_overlay.9.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
