@@ -53,8 +53,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExtensionMethods.cs" />
+    <Compile Include="NativeMethods.cs" />
     <Compile Include="NinePatchCanvas.cs" />
     <Compile Include="NinePatchData.cs" />
+    <Compile Include="Patch.cs" />
+    <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

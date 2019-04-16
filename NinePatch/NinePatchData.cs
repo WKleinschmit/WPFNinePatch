@@ -5,6 +5,9 @@ namespace NinePatch
 {
     class NinePatchData
     {
+        public const uint NoSingleColor = 1u;
+        public const uint Transparent = 0u;
+
         public int OutlineInsetsLeft { get; set; }
         public int OutlineInsetsTop { get; set; }
         public int OutlineInsetsRight { get; set; }
@@ -12,9 +15,9 @@ namespace NinePatch
         public float Radius { get; set; }
         public uint Alpha { get; set; }
 
-        public bool HasOutline { get; private set; }
-        public bool HasLayoutBounds { get; private set; }
-        public bool HasPatches { get; private set; }
+        public bool HasOutline { get; internal set; }
+        public bool HasLayoutBounds { get; internal set; }
+        public bool HasPatches { get; internal set; }
 
         public void Read_npOl(BinaryReader reader)
         {

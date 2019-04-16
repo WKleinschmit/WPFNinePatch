@@ -7,7 +7,7 @@
         xmlns:np="clr-namespace:NinePatch;assembly=NinePatch"
         mc:Ignorable="d"
         Title="MainWindow">
-    <Grid>
+    <Grid Background="White">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
@@ -49,18 +49,43 @@
                       Background="Aqua"
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Center" />
-        <np:NinePatchCanvas Grid.Column="0"
-                            Grid.Row="0"
-                            PngUri="Examples/dots.9.png">
-            <Grid Background="BlueViolet"
-                  Opacity=".3" />
-        </np:NinePatchCanvas>
-        <np:NinePatchCanvas Grid.Column="2"
-                            Grid.Row="0"
-                            PngUri="Examples/dots_compiled.9.png">
-            <Grid Background="BlueViolet"
-                  Opacity="0.3">
-            </Grid>
-        </np:NinePatchCanvas>
+        <Grid Grid.Column="0"
+              Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <np:NinePatchCanvas x:Name="Canvas1"
+                                Background="Bisque"
+                                Grid.Row="0"
+                                PngUri="Examples/dots.9.png">
+                <Grid Background="#4C8A2EB2">
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center">Uncompiled</TextBlock>
+                </Grid>
+            </np:NinePatchCanvas>
+            <CheckBox Grid.Row="1"
+                      IsChecked="{Binding UseLayoutBounds, ElementName=Canvas1}"
+                      IsEnabled="{Binding HasLayoutBounds, ElementName=Canvas1}">Use layout bounds</CheckBox>
+        </Grid>
+        <Grid Grid.Column="2"
+              Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <np:NinePatchCanvas x:Name="Canvas2"
+                                Background="Bisque"
+                                Grid.Row="0"
+                                PngUri="Examples/dots_compiled.9.png">
+                <Grid Background="#4C8A2EB2">
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center">Compiled</TextBlock>
+                </Grid>
+            </np:NinePatchCanvas>
+            <CheckBox Grid.Row="1"
+                      IsChecked="{Binding UseLayoutBounds, ElementName=Canvas2}"
+                      IsEnabled="{Binding HasLayoutBounds, ElementName=Canvas2}">Use layout bounds</CheckBox>
+        </Grid>
     </Grid>
 </Window>

@@ -7,12 +7,15 @@
         <Setter Property="Control.Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ContentControl}">
-                    <Grid>
-                        <Grid Name="bgGrid" />
+                    <Grid ClipToBounds="True">
+                        <Grid Name="bgGrid"
+                              SnapsToDevicePixels="True"
+                              Margin="{Binding LayoutBounds, RelativeSource={RelativeSource AncestorType=ninePatch:NinePatchCanvas}}"/>
                         <ContentPresenter Content="{TemplateBinding ContentControl.Content}"
                                           ContentTemplate="{TemplateBinding ContentControl.ContentTemplate}"
-                                          ContentStringFormat="{TemplateBinding ContentControl.ContentStringFormat}" 
-                                          Margin="{Binding ContentMargin, RelativeSource={RelativeSource AncestorType=ninePatch:NinePatchCanvas}}"/>
+                                          ContentStringFormat="{TemplateBinding ContentControl.ContentStringFormat}"
+                                          SnapsToDevicePixels="True"
+                                          Margin="{Binding ContentMargin, RelativeSource={RelativeSource AncestorType=ninePatch:NinePatchCanvas}}" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
